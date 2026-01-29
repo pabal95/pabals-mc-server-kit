@@ -1,0 +1,23 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Java / Minecraft server files that shouldn’t be committed
+world/
+world_*/
+logs/
+*.jar
+*.json
+*.dat
+*.lock
+
+# PowerShell / Bash cache
+*.ps1xml
+*.sh~
