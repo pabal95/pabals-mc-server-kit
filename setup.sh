@@ -28,7 +28,7 @@ else
     exit 1
 fi
 
-#----------DEPENDENCY CHECKING---------
+#----------DEPENDENCY CHECKING, CURL, JQ, TMUX, and JAVA---------
 
 for item in curl jq tmux; do
     if ! command -v "$item" &> /dev/null; then
@@ -38,12 +38,29 @@ for item in curl jq tmux; do
         elif [[ $PKG_MANAGER == "apt" ]]; then
             echo "$item is not installed. Installing with apt..."
             apt update && apt install -y "$item"
-       
         fi
     else
-        echo "dependencies already installed, proceeding..."
+        echo "$item is already installed"
     fi
 done
+
+#--Java check--
+
+if ! command -v java &> /dev/null; then
+    echo "Java is not installed. Installing Java 21 with $PKG_MANAGER..."
+    if [[ $PKG_MANAGER == "pacman" ]]; then
+        pacman -S --noconfirm jdk21-openjdk
+    elif [[ $PKG_MANAGER == "apt" ]]; then
+        apt update && apt install -y openjdk-21-jre-headless
+    fi
+    if ! command -v java &> /dev/null; then
+        echo "Java installation failed. Please install Java 21 manually and re-run the script."
+        exit 1
+    fi
+    echo "Java installed successfully."
+else
+    echo "Java is already installed, proceeding with setup..."
+fi
 
 #----------INSTALL DIRECTORY------------
 read -rp "Enter installation directory (def: /home/$USER/minecraft-server): " INSTALL_DIR
@@ -159,3 +176,31 @@ white-list=$([[ $WHITELIST =~ ^[Yy]$ ]] && echo "true" || echo "false")
 EOL
 
 echo "SERVER CONFIGURATION COMPLETE."
+
+
+#---------TMUX (CREATION OF SERVER START SCRIPT)------------
+
+read -rp "Enter tmux session name (def: mc-server): " TMUX_SESSION
+TMUX_SESSION=${TMUX_SESSION:-mc-server}
+read -rp "Enter minimum RAM allocation (def: 1G): " MIN_RAM
+MIN_RAM=${MIN_RAM:-1G}
+read -rp "Enter maximum RAM allocation (def: 2G): " MAX_RAM
+MAX_RAM=${MAX_RAM:-2G}
+
+cat > "$INSTALL_DIR/start.sh" <<EOL
+#!/usr/bin/env bash
+cd "$INSTALL_DIR"
+tmux new-session -d -s "$TMUX_SESSION" "java -Xms$MIN_RAM -Xmx$MAX_RAM -jar server.jar nogui"
+echo "Server started. Attach with tmux attach-session -t $TMUX_SESSION"
+EOL
+
+chmod +x "$INSTALL_DIR/start.sh"
+
+
+echo "-----------------------------------"
+echo "Setup complete!"
+echo "Server installed to: $INSTALL_DIR"
+echo "To start your server: cd $INSTALL_DIR && bash start.sh"
+echo "To attach to console: tmux attach -t $TMUX_SESSION"
+echo "To detach (keep running): Ctrl+B then D"
+echo "-----------------------------------"
