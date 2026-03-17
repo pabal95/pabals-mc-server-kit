@@ -1,8 +1,8 @@
-# mc-server-kit
+# Pabal's Minecraft Server Kit
 
-A set of Bash scripts to deploy and manage a Minecraft Java server on headless Linux systems. Born out of being tired of setting up servers manually every time on a fresh machine.
+A set of Bash scripts to deploy and manage a Minecraft Java server on headless Linux systems. Born out of being tired of setting up servers manually every time on a fresh machine/fresh version of Minecraft
 
-Currently targets **Ubuntu/Debian only**. Arch support is on the roadmap.
+Currently targets **Ubuntu/Debian-based Distros only**. Arch support as well as other distros is on the roadmap.
 
 > ⚠️ This project is in active early development. Things will change. See the [roadmap](#roadmap) below.
 
@@ -10,10 +10,10 @@ Currently targets **Ubuntu/Debian only**. Arch support is on the roadmap.
 
 ## What it does right now (v0.1.0)
 
-- Fetches the latest vanilla server jar straight from Mojang's API — no manual downloading
+- Fetches the **latest** vanilla server jar straight from Mojang's API, why? I dont like downloading the JAR all the time from the browser.
 - Writes `eula.txt` automatically (no more forgetting)
 - Generates a `server.properties` with sane defaults
-- Launches the server inside a **tmux** session so you can detach and it keeps running in the background
+- Launches the server inside a **tmux** session so you can detach and it keeps running in the background for headless systems.
 
 That's it for now. Solid foundation, more coming soon.
 
@@ -52,12 +52,12 @@ Follow the prompts. The script will ask where to install, what port to use, and 
 
 ## Roadmap
 
-- [x] v0.1.0 — vanilla jar download, eula, server.properties, tmux launch
+- [x] v0.1.0 — vanilla jar download, auto-eula, server.properties configuration, tmux launch
 - [ ] v0.2.0 — systemd service (auto-start on boot)
 - [ ] v0.3.0 — Java version detection and auto-install based on MC version
 - [ ] v0.4.0 — whitelist setup, bring-your-own-jar (Fabric, Forge, etc.)
 - [ ] v0.5.0 — Cloudflare DDNS for residential/dynamic IP setups
-- [ ] v1.0.0 — Arch Linux support, full polish
+- [ ] v1.0.0 — Support for other linux distros, full polish
 
 ---
 
