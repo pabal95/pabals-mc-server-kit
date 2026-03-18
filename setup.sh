@@ -182,11 +182,12 @@ echo "SERVER CONFIGURATION COMPLETE."
 
 read -rp "Enter tmux session name (def: mc-server): " TMUX_SESSION
 TMUX_SESSION=${TMUX_SESSION:-mc-server}
-read -rp "Enter minimum RAM allocation (def: 1G): " MIN_RAM
+read -rp "Enter minimum RAM allocation (def: 1G, format: 1G, 2G, etc.): " MIN_RAM
 MIN_RAM=${MIN_RAM:-1G}
-read -rp "Enter maximum RAM allocation (def: 2G): " MAX_RAM
+read -rp "Enter maximum RAM allocation (def: 2G, format: 2G, 3G, etc.): " MAX_RAM
 MAX_RAM=${MAX_RAM:-2G}
 
+# start script for tmux session, this will start the server in a new tmux session with the specified name and RAM allocation
 cat > "$INSTALL_DIR/start.sh" <<EOL
 #!/usr/bin/env bash
 cd "$INSTALL_DIR"
@@ -194,7 +195,38 @@ tmux new-session -d -s "$TMUX_SESSION" "java -Xms$MIN_RAM -Xmx$MAX_RAM -jar serv
 echo "Server started. Attach with tmux attach-session -t $TMUX_SESSION"
 EOL
 
+# stop script for tmux session (maybe if statement for if the user wants it as systemd service or not, but for now just a simple stop script)
+cat > "$INSTALL_DIR/stop.sh" <<EOL
+#!/usr/bin/env bash
+cd "$INSTALL_DIR"
+tmux send-keys -t "$TMUX_SESSION" "stop" Enter
+sleep 10
+tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
+echo "Server stopped."
+EOL
+
+read -rp "Do you want this server to start on boot using systemd? [y/N]: " SYSTEMD_ENABLE
+if [[ $SYSTEMD_ENABLE =~ ^[Yy]$ ]]; then
+    SERVICE_FILE="/etc/systemd/system/$TMUX_SESSION.service"
+    cat > "$SERVICE_FILE" <<EOL
+    [Unit]
+    Description= MC Server TMUX : $TMUX_SESSION
+    After=network.target
+    [Service]
+    Type=forking
+    User=$SUDO_USER
+    WorkingDirectory=$INSTALL_DIR
+    ExecStart=/bin/bash $INSTALL_DIR/start.sh
+    ExecStop=/bin/bash $INSTALL_DIR/stop.sh
+    Restart=on-failure
+    RestartSec=10
+    [Install]
+    WantedBy=multi-user.target
+EOL
+fi
+
 chmod +x "$INSTALL_DIR/start.sh"
+chmod +x "$INSTALL_DIR/stop.sh"
 
 #fix for the tmux session being created as root, we want it to be owned by the user who ran the script with sudo
 chown -R "$SUDO_USER":"$SUDO_USER" "$INSTALL_DIR"
