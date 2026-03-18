@@ -196,6 +196,8 @@ EOL
 
 chmod +x "$INSTALL_DIR/start.sh"
 
+#fix for the tmux session being created as root, we want it to be owned by the user who ran the script with sudo
+chown -R "$SUDO_USER":"$SUDO_USER" "$INSTALL_DIR"
 
 echo "-----------------------------------"
 echo "Setup complete!"
