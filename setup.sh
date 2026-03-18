@@ -205,31 +205,35 @@ tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 echo "Server stopped."
 EOL
 
+chmod +x "$INSTALL_DIR/start.sh"
+chmod +x "$INSTALL_DIR/stop.sh"
+#fix for the tmux session being created as root, we want it to be owned by the user who ran the script with sudo
+chown -R "$SUDO_USER":"$SUDO_USER" "$INSTALL_DIR"
+
 read -rp "Do you want this server to start on boot using systemd? [y/N]: " SYSTEMD_ENABLE
 if [[ $SYSTEMD_ENABLE =~ ^[Yy]$ ]]; then
     SERVICE_FILE="/etc/systemd/system/$TMUX_SESSION.service"
     cat > "$SERVICE_FILE" <<EOL
-    [Unit]
-    Description= MC Server TMUX : $TMUX_SESSION
-    After=network.target
-    [Service]
-    Type=forking
-    User=$SUDO_USER
-    WorkingDirectory=$INSTALL_DIR
-    ExecStart=/bin/bash $INSTALL_DIR/start.sh
-    ExecStop=/bin/bash $INSTALL_DIR/stop.sh
-    Restart=on-failure
-    RestartSec=10
-    [Install]
-    WantedBy=multi-user.target
+[Unit]
+Description=MC Server TMUX : $TMUX_SESSION
+After=network.target
+
+[Service]
+Type=forking
+User=$SUDO_USER
+WorkingDirectory=$INSTALL_DIR
+ExecStart=/bin/bash $INSTALL_DIR/start.sh
+ExecStop=/bin/bash $INSTALL_DIR/stop.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 EOL
+    systemctl daemon-reload
+    systemctl enable --now "$TMUX_SESSION.service"
+    echo "Systemd service created and started: $TMUX_SESSION.service"
 fi
-
-chmod +x "$INSTALL_DIR/start.sh"
-chmod +x "$INSTALL_DIR/stop.sh"
-
-#fix for the tmux session being created as root, we want it to be owned by the user who ran the script with sudo
-chown -R "$SUDO_USER":"$SUDO_USER" "$INSTALL_DIR"
 
 echo "-----------------------------------"
 echo "Setup complete!"
